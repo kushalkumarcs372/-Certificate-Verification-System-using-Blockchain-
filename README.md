@@ -64,7 +64,3 @@ Open `frontend/index.html` in your browser.
 - ✅ Verify by Certificate ID or Hash
 - ✅ Returns issuer, student ID, and issuance timestamp
 - ✅ Immutable — past certificates survive institution revocation
-
-## 👤 Author
-
-Kushal Kumar C S — PES1UG23CS320, PESIT Bangalore
