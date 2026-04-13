@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate Verification System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #94a3b8;
+      margin-bottom: 30px;
+      font-size: 0.95rem;
+    }
+    .wallet-bar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    .wallet-bar button {
+      background: #38bdf8;
+      color: #0f172a;
+      border: none;
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .wallet-bar button:hover { background: #7dd3fc; }
+    #walletAddress {
+      margin-left: 16px;
+      align-self: center;
+      color: #7dd3fc;
+      font-size: 0.9rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid #334155;
+    }
+    .panel h2 {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #38bdf8;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      margin-top: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 0.95rem;
+    }
+    input:focus { outline: none; border-color: #38bdf8; }
+    button.action {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: #0ea5e9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button.action:hover { background: #38bdf8; color: #0f172a; }
+    button.action.green { background: #10b981; }
+    button.action.green:hover { background: #34d399; color: #0f172a; }
+    .result-box {
+      margin-top: 18px;
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid #334155;
+      font-size: 0.88rem;
+      line-height: 1.8;
+      min-height: 60px;
+      word-break: break-all;
+    }
+    .valid { color: #34d399; }
+    .invalid { color: #f87171; }
+    .info { color: #7dd3fc; }
+    .admin-panel {
+      max-width: 1100px;
+      margin: 24px auto 0 auto;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid #334155;
+    }
+    .admin-panel h2 {
+      font-size: 1.2rem;
+      color: #f59e0b;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+    .admin-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .admin-row input { flex: 1; margin-top: 0; }
+    .admin-row button { width: auto; padding: 10px 24px; margin-top: 0; }
+    #adminResult {
+      margin-top: 14px;
+      font-size: 0.88rem;
+      color: #34d399;
+      word-break: break-all;
+    }
+    .consensus-box {
+      max-width: 1100px;
+      margin: 24px auto 0 auto;
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid #334155;
+    }
+    .consensus-box h2 {
+      font-size: 1.2rem;
+      color: #a78bfa;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+    .consensus-box p {
+      color: #94a3b8;
+      font-size: 0.92rem;
+      line-height: 1.8;
+    }
+    .consensus-box strong { color: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<h1>🎓 Certificate Verification System</h1>
+<p class="subtitle">Blockchain-powered · Tamper-proof · Trustless</p>
+
+<div class="wallet-bar">
+  <button onclick="connectWallet()">Connect MetaMask</button>
+  <span id="walletAddress">Not connected</span>
+</div>
+
+<!-- Admin Panel -->
+<div class="admin-panel">
+  <h2>⚙️ Admin Panel — Register Institution</h2>
+  <div class="admin-row">
+    <input id="institutionWallet" placeholder="Institution wallet address (0x...)" />
+    <button class="action" style="background:#f59e0b;margin-top:0" onclick="registerInstitution()">Register</button>
+    <button class="action" style="background:#ef4444;margin-top:0" onclick="revokeInstitution()">Revoke</button>
+  </div>
+  <div id="adminResult"></div>
+</div>
+
+<!-- Main Panels -->
+<div class="grid" style="margin-top:24px;">
+
+  <!-- Issue Certificate -->
+  <div class="panel">
+    <h2>🏛️ Institution — Issue Certificate</h2>
+    <label>Certificate Content (to hash)</label>
+    <input id="certContent" placeholder="Enter certificate content to generate hash" />
+    <label>Generated Hash (or paste manually)</label>
+    <input id="certHash" placeholder="0x..." />
+    <button class="action" style="background:#6366f1;margin-top:10px;" onclick="generateHash()">Generate Hash from Content</button>
+    <label>Institution Name</label>
+    <input id="institutionName" placeholder="e.g. PESIT Bangalore" />
+    <label>Student ID</label>
+    <input id="studentId" placeholder="e.g. PES1UG23CS320" />
+    <button class="action green" onclick="issueCertificate()">Issue Certificate on Blockchain</button>
+    <div class="result-box" id="issueResult">Result will appear here...</div>
+  </div>
+
+  <!-- Verify Certificate -->
+  <div class="panel">
+    <h2>🔍 Verifier — Check Authenticity</h2>
+
+    <label>Verify by Certificate ID</label>
+    <input id="verifyCertId" placeholder="Certificate ID (bytes32)" />
+    <button class="action" onclick="verifyById()">Verify by ID</button>
+
+    <label style="margin-top:20px;">— OR —</label>
+
+    <label>Verify by Certificate Hash</label>
+    <input id="verifyHash" placeholder="Certificate hash (bytes32)" />
+    <button class="action" onclick="verifyByHash()">Verify by Hash</button>
+
+    <div class="result-box" id="verifyResult">Result will appear here...</div>
+  </div>
+
+</div>
+
+<!-- Consensus Algorithm Justification -->
+<div class="consensus-box">
+  <h2>⛓️ Consensus Algorithm — Proof of Authority (PoA)</h2>
+  <p>
+    This system runs on a <strong>Proof of Authority (PoA)</strong> consensus network (Hardhat local / deployable to Besu or Quorum for production).
+    PoA is the correct choice for a <strong>permissioned institutional environment</strong> because:
+    validators are known, trusted entities (universities, government bodies) rather than anonymous miners;
+    it provides <strong>instant transaction finality</strong> with no probabilistic confirmation delays;
+    it consumes <strong>no energy</strong> unlike Proof of Work;
+    and it requires <strong>no token economics</strong> — institutions interact at near-zero gas cost on a private chain.
+    Unlike Proof of Stake, PoA does not require validators to lock up capital, making it suitable for
+    academic and government institutions that operate on fixed IT budgets.
+    The immutability guarantee is preserved: once a certificate hash is written to the ledger by an
+    authorized institution wallet, no validator can alter it without consensus of all known authorities —
+    making fraud immediately detectable via hash mismatch.
+  </p>
+</div>
+
+<script>
+  const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+  const ABI = [
+    "function registerInstitution(address wallet) external",
+    "function revokeInstitution(address wallet) external",
+    "function issueCertificate(bytes32 certHash, string calldata institutionName, string calldata studentId) external returns (bytes32)",
+    "function verifyCertificateById(bytes32 certId) external view returns (bool isValid, bytes32 certHash, string memory institutionName, string memory studentId, uint256 issuedAt)",
+    "function verifyCertificate(bytes32 certHash) external view returns (bool isValid, bytes32 certId, string memory institutionName, string memory studentId, uint256 issuedAt)",
+    "function hashExists_(bytes32 certHash) external view returns (bool)",
+    "event CertificateIssued(bytes32 indexed certId, bytes32 indexed certHash, string institutionName, string studentId, uint256 issuedAt)"
+  ];
+
+  let provider, signer, contract;
+
+  async function connectWallet() {
+    if (!window.ethereum) return alert("MetaMask not found!");
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+
+    // Force switch to Hardhat Local (chainId 31337 = 0x7a69)
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x7a69" }],
+      });
+    } catch (e) {
+      alert("Please switch MetaMask to Hardhat Local network manually");
+      return;
+    }
+
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    signer = provider.getSigner();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    const addr = await signer.getAddress();
+    document.getElementById("walletAddress").textContent =
+      addr.slice(0, 6) + "..." + addr.slice(-4) + " ✅";
+  }
+
+  function generateHash() {
+    const content = document.getElementById("certContent").value.trim();
+    if (!content) return alert("Enter certificate content first");
+    const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(content));
+    document.getElementById("certHash").value = hash;
+  }
+
+  async function registerInstitution() {
+    if (!contract) return alert("Connect wallet first");
+    const wallet = document.getElementById("institutionWallet").value.trim();
+    const el = document.getElementById("adminResult");
+    try {
+      const tx = await contract.registerInstitution(wallet);
+      await tx.wait();
+      el.style.color = "#34d399";
+      el.textContent = "✅ Institution registered: " + wallet;
+    } catch (e) {
+      el.style.color = "#f87171";
+      el.textContent = "❌ " + (e.reason || e.message);
+    }
+  }
+
+  async function revokeInstitution() {
+    if (!contract) return alert("Connect wallet first");
+    const wallet = document.getElementById("institutionWallet").value.trim();
+    const el = document.getElementById("adminResult");
+    try {
+      const tx = await contract.revokeInstitution(wallet);
+      await tx.wait();
+      el.style.color = "#34d399";
+      el.textContent = "✅ Institution revoked: " + wallet;
+    } catch (e) {
+      el.style.color = "#f87171";
+      el.textContent = "❌ " + (e.reason || e.message);
+    }
+  }
+
+  async function issueCertificate() {
+    if (!contract) return alert("Connect wallet first");
+    const certHash = document.getElementById("certHash").value.trim();
+    const institutionName = document.getElementById("institutionName").value.trim();
+    const studentId = document.getElementById("studentId").value.trim();
+    const box = document.getElementById("issueResult");
+    if (!certHash || !institutionName || !studentId) {
+      box.innerHTML = '<span class="invalid">❌ All fields required</span>';
+      return;
+    }
+    try {
+      box.innerHTML = '<span class="info">⏳ Issuing certificate...</span>';
+      const tx = await contract.issueCertificate(certHash, institutionName, studentId);
+      const receipt = await tx.wait();
+      const event = receipt.events.find(e => e.event === "CertificateIssued");
+      const certId = event.args.certId;
+      box.innerHTML =
+        `<span class="valid">✅ Certificate Issued Successfully!</span><br>` +
+        `<b>Certificate ID:</b> ${certId}<br>` +
+        `<b>Hash:</b> ${certHash}<br>` +
+        `<b>Institution:</b> ${institutionName}<br>` +
+        `<b>Student ID:</b> ${studentId}<br>` +
+        `<b>Tx:</b> ${receipt.transactionHash}`;
+    } catch (e) {
+      box.innerHTML = `<span class="invalid">❌ ${e.reason || e.message}</span>`;
+    }
+  }
+
+  async function verifyById() {
+    if (!contract) return alert("Connect wallet first");
+    const certId = document.getElementById("verifyCertId").value.trim();
+    const box = document.getElementById("verifyResult");
+    try {
+      box.innerHTML = '<span class="info">⏳ Verifying...</span>';
+      const result = await contract.verifyCertificateById(certId);
+      if (!result.isValid) {
+        box.innerHTML = '<span class="invalid">❌ Certificate NOT found on blockchain</span>';
+        return;
+      }
+      const date = new Date(result.issuedAt.toNumber() * 1000).toLocaleString();
+      box.innerHTML =
+        `<span class="valid">✅ AUTHENTIC — Certificate Verified</span><br>` +
+        `<b>Institution:</b> ${result.institutionName}<br>` +
+        `<b>Student ID:</b> ${result.studentId}<br>` +
+        `<b>Hash:</b> ${result.certHash}<br>` +
+        `<b>Issued At:</b> ${date}`;
+    } catch (e) {
+      box.innerHTML = `<span class="invalid">❌ ${e.reason || e.message}</span>`;
+    }
+  }
+
+  async function verifyByHash() {
+    if (!contract) return alert("Connect wallet first");
+    const hash = document.getElementById("verifyHash").value.trim();
+    const box = document.getElementById("verifyResult");
+    try {
+      box.innerHTML = '<span class="info">⏳ Verifying by hash...</span>';
+      const result = await contract.verifyCertificate(hash);
+      if (!result.isValid) {
+        box.innerHTML = '<span class="invalid">❌ Hash NOT found — Certificate may be FORGED or INVALID</span>';
+        return;
+      }
+      const date = new Date(result.issuedAt.toNumber() * 1000).toLocaleString();
+      box.innerHTML =
+        `<span class="valid">✅ AUTHENTIC — Certificate Verified by Hash</span><br>` +
+        `<b>Certificate ID:</b> ${result.certId}<br>` +
+        `<b>Institution:</b> ${result.institutionName}<br>` +
+        `<b>Student ID:</b> ${result.studentId}<br>` +
+        `<b>Issued At:</b> ${date}`;
+    } catch (e) {
+      box.innerHTML = `<span class="invalid">❌ ${e.reason || e.message}</span>`;
+    }
+  }
+</script>
+</body>
+</html>
